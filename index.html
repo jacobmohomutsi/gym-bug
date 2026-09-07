@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GYM-BUG — Training Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10152A">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #10152A; --ink-2: #1A2140;
+    --paper: #F3EFE4; --paper-dim: #9AA1BE;
+    --ember: #E8871E; --ember-dim: #4A3420;
+    --sage: #7FA37A; --sage-dim: #2E3E2C;
+    --mist: #6E7699; --mist-dim: #232A47;
+    --gold: #E8C547; --gold-dim: #4A4020;
+    --line: #2A3156; --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(120% 90% at 50% -10%, #1B2347 0%, var(--ink) 55%);
+    color: var(--paper); font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh; padding: 26px 18px 44px;
+  }
+  .wrap{ max-width: 420px; margin: 0 auto; }
+  .toprow{ display:flex; justify-content:space-between; align-items:baseline; color: var(--paper-dim); font-size: 13px; margin-bottom: 18px; }
+  .toprow b{ color: var(--gold); font-weight: 700; letter-spacing: 0.5px; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom: 22px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+  .tabs button{ flex:1; background:none; border:none; color: var(--paper-dim); font-family:'Inter',sans-serif;
+    font-size: 13px; font-weight:600; padding: 9px 0; border-radius: 9px; cursor:pointer; }
+  .tabs button.active{ background: var(--ink); color: var(--gold); }
+
+  .nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
+  .nav button{ background:none; border:none; color: var(--paper-dim); font-size: 20px; padding: 6px 10px; cursor:pointer; }
+  .nav button:active{ color: var(--paper); }
+  .nav .datebtn{ display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; background:none; border:none; color:var(--paper); }
+  .nav .datebtn .dname{ font-size:15px; font-weight:600; }
+  .nav .datebtn .today-pill{ font-size:11px; color: var(--paper-dim); }
+
+  .streak-block{ text-align:center; margin-bottom: 26px; }
+  .streak-num{ font-family:'Fraunces',serif; font-weight:500; font-size:88px; line-height:0.9;
+    background: linear-gradient(180deg, var(--gold) 0%, var(--ember) 65%, #B5541A 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .streak-label{ font-size:14px; color: var(--paper-dim); margin-top:6px; }
+
+  .card{ background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .card.strength{ border-color: var(--ember-dim); background: linear-gradient(160deg, #24192A 0%, var(--ink-2) 60%); }
+  .card.mobility{ border-color: var(--sage-dim); }
+  .card.rest{ border-color: var(--mist-dim); }
+  .card.jog{ border-color: var(--gold-dim); background: linear-gradient(160deg, #2A2410 0%, var(--ink-2) 60%); }
+
+  .day-type{ font-family:'Fraunces',serif; font-size:26px; font-weight:500; margin:0 0 4px; }
+  .strength .day-type{ color: var(--ember); }
+  .mobility .day-type{ color: var(--sage); }
+  .rest .day-type{ color: var(--mist); }
+  .jog .day-type{ color: var(--gold); }
+
+  .day-sub{ color: var(--paper-dim); font-size:14px; margin:0 0 14px; line-height:1.5; }
+  .moves{ font-size:13px; color: var(--paper-dim); margin:0 0 16px; line-height:1.7; }
+  .moves span{ color: var(--paper); }
+
+  .movement-selectors{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; padding:12px; background:var(--ink); border:1px solid var(--line); border-radius:12px; }
+  .selector-row{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; }
+  .selector-row label{ color:var(--paper-dim); font-weight:500; }
+  .selector-row select{ background:var(--ink-2); color:var(--gold); border:1px solid var(--line); border-radius:8px; padding:4px 8px; font-size:12px; font-family:'Inter',sans-serif; outline:none; max-width:65%; }
+
+  .busy-row{ display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:13px; color: var(--paper-dim); }
+  .busy-row input{ width:16px; height:16px; cursor:pointer; }
+
+  button.log-btn{ width:100%; padding:14px; border-radius:12px; border:none; font-family:'Inter',sans-serif;
+    font-size:15px; font-weight:600; cursor:pointer; transition: transform 0.15s ease, opacity 0.15s ease; }
+  .strength button.log-btn{ background: var(--ember); color:#1A0F04; }
+  .mobility button.log-btn{ background: var(--sage); color:#0F150E; }
+  .rest button.log-btn{ background: var(--mist); color:#0E1120; }
+  .jog button.log-btn{ background: var(--gold); color:#1A1608; }
+  button.log-btn:active{ transform: scale(0.98); }
+  button.log-btn.done{ opacity:0.55; }
+
+  .horizon-label{ color: var(--paper-dim); font-size:13px; margin:22px 0 12px; }
+  .horizon{ display:flex; justify-content:space-between; align-items:flex-end; padding:16px 4px 4px; border-bottom:1px solid var(--line); }
+  .daychip{ display:flex; flex-direction:column; align-items:center; gap:8px; font-size:11px; color: var(--paper-dim);
+    background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; }
+  .sun{ width:20px; height:20px; border-radius:50%; border:1.5px solid var(--line); background:transparent; }
+  .sun.filled.strength{ background: var(--ember); border-color: var(--ember); }
+  .sun.filled.mobility{ background: var(--sage); border-color: var(--sage); }
+  .sun.filled.rest{ background: var(--mist); border-color: var(--mist); }
+  .sun.filled.jog{ background: var(--gold); border-color: var(--gold); }
+  .sun.busy{ border-style: dashed; }
+  .sun.viewing{ box-shadow: 0 0 0 2px var(--paper); }
+
+  .review-card{ border-color: var(--line); margin-top: 20px; }
+  .review-title{ font-family:'Fraunces',serif; font-size:22px; font-weight:500; margin: 0 0 4px; color: var(--paper); }
+  .review-sub{ color: var(--paper-dim); font-size:13px; margin: 0 0 18px; }
+  .field{ margin-bottom: 14px; }
+  .field label{ display:block; font-size:12.5px; color: var(--paper-dim); margin-bottom:5px; }
+  .field input, .field textarea{
+    width:100%; background: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; color: var(--paper); font-family:'Inter',sans-serif; font-size:14px;
+  }
+  .field textarea{ resize: vertical; min-height: 60px; }
+  .field.readout{ display:flex; justify-content:space-between; align-items:center; background: var(--ink);
+    border-radius:10px; padding: 10px 12px; border: 1px solid var(--line); }
+  .field.readout .val{ font-family:'Fraunces',serif; font-size:20px; color: var(--gold); }
+  .save-note{ font-size:12px; color: var(--paper-dim); text-align:center; margin-top: 4px; min-height: 16px; }
+
+  .note{ color: var(--paper-dim); font-size:12.5px; text-align:center; margin-top: 22px; line-height:1.6; }
+
+  .goal-card{ margin-bottom: 18px; }
+  .goal-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 4px; }
+  .goal-title{ font-family:'Fraunces',serif; font-size:21px; font-weight:500; color: var(--paper); margin:0; }
+  .goal-time{ font-size:11.5px; color: var(--paper-dim); }
+  .goal-current{ font-size:12.5px; color: var(--gold); margin: 0 0 16px; }
+  .ladder-step{ display:flex; align-items:flex-start; gap:12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .ladder-step:first-of-type{ border-top: none; }
+  .step-check{ width:22px; height:22px; border-radius:50%; border: 1.5px solid var(--line); background:none;
+    color: transparent; font-size: 13px; line-height:1; cursor:pointer; flex-shrink:0; margin-top:1px; }
+  .step-check.done{ background: var(--gold); border-color: var(--gold); color: #1A1608; }
+  .step-check.current{ border-color: var(--gold); }
+  .step-body{ flex:1; }
+  .step-label{ font-size:14px; color: var(--paper); font-weight:500; }
+  .step-detail{ font-size:12.5px; color: var(--paper-dim); margin-top:2px; }
+  .ladder-step.current .step-label{ color: var(--gold); }
+  .ladder-step.done .step-label, .ladder-step.done .step-detail{ opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="toprow">
+    <span><b>GYM-BUG</b></span>
+    <span>Daily Tracker</span>
+  </div>
+
+  <div class="tabs">
+    <button id="tabToday" class="active">Today</button>
+    <button id="tabGoals">Goals</button>
+  </div>
+
+  <div id="todayView">
+
+    <div class="nav">
+      <button id="prevBtn" aria-label="Previous day">‹</button>
+      <button class="datebtn" id="dateBtn">
+        <span class="dname" id="dateName">—</span>
+        <span class="today-pill" id="todayPill"></span>
+      </button>
+      <button id="nextBtn" aria-label="Next day">›</button>
+    </div>
+
+    <div class="streak-block">
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label">day streak</div>
+    </div>
+
+    <div class="card" id="dayCard">
+      <p class="day-type" id="dayType">—</p>
+      <p class="day-sub" id="daySub">—</p>
+
+      <div class="movement-selectors" id="movementSelectors" style="display:none;">
+        <div class="selector-row">
+          <label for="selectPush">Push Step:</label>
+          <select id="selectPush"></select>
+        </div>
+        <div class="selector-row">
+          <label for="selectPull">Pull Step:</label>
+          <select id="selectPull"></select>
+        </div>
+        <div class="selector-row">
+          <label for="selectSquat">Squat Step:</label>
+          <select id="selectSquat"></select>
+        </div>
+      </div>
+
+      <p class="moves" id="moves"></p>
+      <div class="busy-row" id="busyRow">
+        <input type="checkbox" id="busyCheck">
+        <label for="busyCheck">Busy today — quick version</label>
+      </div>
+      <button class="log-btn" id="logBtn">Mark done</button>
+    </div>
+
+    <div id="reviewSlot"></div>
+
+    <div class="horizon-label">This week</div>
+    <div class="horizon" id="horizon"></div>
+
+    <div class="note">Rest days auto-continue your streak. Busy days (dashed ring) still count if logged.</div>
+
+  </div>
+
+  <div id="goalsView" style="display:none;">
+    <div class="note" style="margin-top:0; margin-bottom:20px; text-align:left;">
+      Core end of year long-term goals & progressions — tap a step to mark it achieved; your active step updates automatically across your workouts.
+    </div>
+    <div id="goalsSlot"></div>
+  </div>
+
+</div>
+
+<script>
+// Schedule: M=Strength, T=Strength, W=Active Rest, T=Strength, F=Easy Jog, S=5k, S=Full Rest
+// 0=Sun (Full Rest / Weekly Log), 1=Mon (Strength), 2=Tue (Strength), 3=Wed (Active Rest), 4=Thu (Strength), 5=Fri (Easy Jog), 6=Sat (5k)
+const SCHEDULE = {
+  0: { type:'rest', label:'Full Rest', sub:'Sunday rest day & weekly log review.',
+       moves:'Full rest. Take time to complete your weekly log below.', busyMoves:'Full rest. Complete your log when ready.', btn:'Log rest day' },
+  1: { type:'strength', label:'Strength Workout', sub:'Push · Pull · Squat — targeted progression step.',
+       btn:'Mark done' },
+  2: { type:'strength', label:'Strength Workout', sub:'Push · Pull · Squat — targeted progression step.',
+       btn:'Mark done' },
+  3: { type:'mobility', label:'Active Rest', sub:'Wednesday active recovery & mobility.',
+       moves:'Dead hang · Scapular mobility · Light posture flow',
+       busyMoves:'Quick version: 2 min dead hang + light stretch', btn:'Mark done' },
+  4: { type:'strength', label:'Strength Workout', sub:'Push · Pull · Squat — targeted progression step.',
+       btn:'Mark done' },
+  5: { type:'jog', label:'Easy Jog', sub:'Conversational pace easy run.',
+       moves:'20–25 min easy jog', busyMoves:'Quick version: 10 min brisk walk / light jog', btn:'Log the jog' },
+  6: { type:'jog', label:'5k Run', sub:'Saturday steady effort 5k run.',
+       moves:'5k run at steady pace', busyMoves:'Quick version: 15 min tempo run', btn:'Log 5k' }
+};
+const DOW_LETTERS = ['S','M','T','W','T','F','S'];
+const LOG_KEY = 'dawnTrackerLog';
+const REVIEW_KEY = 'dawnTrackerReviews';
+const GOALS_KEY = 'dawnTrackerGoals';
+const PLAN_START = new Date(2026, 8, 7); // Mon Sept 7 2026
+
+const GOALS = {
+  push: {
+    title: 'Push Ladder', time: '2:32-3:40',
+    steps: [
+      { label:'Standard Push-up', detail:'15 reps' },
+      { label:'Feet-Elevated Push-up', detail:'12 reps, on a chair' },
+      { label:'Staggered Push-up', detail:'8 reps per side, one hand forward, one back' },
+      { label:'Assisted One-Arm Push-up', detail:'5 reps per side, free hand touches floor for balance' },
+      { label:'One-Arm Push-up', detail:'Goal' }
+    ]
+  },
+  pull: {
+    title: 'Pull Ladder', time: '3:41-6:14',
+    steps: [
+      { label:'Australian Row', detail:'15 reps, under a table/rail' },
+      { label:'Dead Hang', detail:'30 seconds' },
+      { label:'Scapular Pulls', detail:'10 reps' },
+      { label:'Negatives', detail:'5 reps at 5 seconds each, slow lower' },
+      { label:'Full Pull-up', detail:'Goal' }
+    ]
+  },
+  squat: {
+    title: 'Squat Ladder', time: '6:14-7:04',
+    steps: [
+      { label:'Bodyweight Squat', detail:'20 reps' },
+      { label:'Split Squat', detail:'12 reps per side' },
+      { label:'Rear Foot Elevated Split Squat', detail:'10 reps per side, foot on chair' },
+      { label:'Assisted Pistol Squat', detail:'5 reps per side, fingertips on door frame' },
+      { label:'Full Pistol Squat', detail:'Goal' }
+    ]
+  }
+};
+
+function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function sameDay(a,b){ return dateKey(a)===dateKey(b); }
+function loadLog(){ try{ return JSON.parse(localStorage.getItem(LOG_KEY) || '{}'); }catch(e){ return {}; } }
+function saveLog(log){ localStorage.setItem(LOG_KEY, JSON.stringify(log)); }
+function loadReviews(){ try{ return JSON.parse(localStorage.getItem(REVIEW_KEY) || '{}'); }catch(e){ return {}; } }
+function saveReviews(r){ localStorage.setItem(REVIEW_KEY, JSON.stringify(r)); }
+function loadGoals(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(GOALS_KEY) || '{}');
+    const out = {};
+    Object.keys(GOALS).forEach(k => { out[k] = saved[k] || GOALS[k].steps.map(()=>false); });
+    return out;
+  }catch(e){
+    const out = {}; Object.keys(GOALS).forEach(k => { out[k] = GOALS[k].steps.map(()=>false); }); return out;
+  }
+}
+function saveGoals(g){ localStorage.setItem(GOALS_KEY, JSON.stringify(g)); }
+
+function getActiveStepIndex(key){
+  const state = GOAL_STATE[key];
+  const idx = state.findIndex(v => !v);
+  return idx === -1 ? GOALS[key].steps.length - 1 : idx;
+}
+
+function currentStepFor(key, dateStr){
+  const dayLog = LOG[dateStr];
+  let idx;
+  if(dayLog && dayLog.selectedSteps && dayLog.selectedSteps[key] !== undefined){
+    idx = dayLog.selectedSteps[key];
+  } else {
+    idx = getActiveStepIndex(key);
+  }
+  return { step: GOALS[key].steps[idx], idx: idx };
+}
+
+function strengthMovesHtml(busy, dateStr){
+  const p = currentStepFor('push', dateStr).step;
+  const pu = currentStepFor('pull', dateStr).step;
+  const s = currentStepFor('squat', dateStr).step;
+  if(busy){
+    return 'Quick version — half volume:<br>'
+      + '<span>Push:</span> ' + p.label + '<br>'
+      + '<span>Pull:</span> ' + pu.label + '<br>'
+      + '<span>Squat:</span> ' + s.label;
+  }
+  return '<span>Push:</span> ' + p.label + ' — ' + p.detail + '<br>'
+    + '<span>Pull:</span> ' + pu.label + ' — ' + pu.detail + '<br>'
+    + '<span>Squat:</span> ' + s.label + ' — ' + s.detail;
+}
+
+function sundayOfWeekContaining(d){
+  const copy = new Date(d);
+  copy.setDate(copy.getDate() - copy.getDay());
+  return copy;
+}
+function mondayOfWeekContaining(d){
+  const sun = sundayOfWeekContaining(d);
+  const mon = new Date(sun);
+  mon.setDate(sun.getDate() + 1);
+  return mon;
+}
+function weekNumberFor(monday){ const diffDays = Math.round((monday - PLAN_START) / 86400000); return Math.floor(diffDays/7) + 1; }
+
+let LOG = loadLog();
+let REVIEWS = loadReviews();
+let GOAL_STATE = loadGoals();
+const TODAY = new Date();
+let VIEW = new Date();
+let MODE = 'today';
+
+function computeStreak(log, today){
+  let count = 0;
+  let d = new Date(today); d.setDate(d.getDate()-1);
+  let guard = 0;
+  while(guard++ < 400){
+    const dow = d.getDay(); const key = dateKey(d); const entry = log[key];
+    if(entry && entry.done) count++;
+    else if(SCHEDULE[dow].type === 'rest') count++;
+    else break;
+    d.setDate(d.getDate()-1);
+  }
+  const tEntry = log[dateKey(today)]; const tDow = today.getDay();
+  if(tEntry && tEntry.done) count++;
+  else if(SCHEDULE[tDow].type === 'rest') count++;
+  return count;
+}
+
+function renderReviewForm(){
+  const sun = sundayOfWeekContaining(VIEW);
+  const mon = mondayOfWeekContaining(VIEW);
+  const wKey = dateKey(sun);
+  const weekNum = weekNumberFor(mon);
+  const existing = REVIEWS[wKey] || {};
+
+  let completed = 0;
+  for(let i=0; i<7; i++){
+    const d = new Date(mon); d.setDate(mon.getDate() + i - 1); // Sun to Sat
+    const e = LOG[dateKey(d)];
+    if(e && e.done) completed++;
+  }
+
+  const slot = document.getElementById('reviewSlot');
+  slot.innerHTML = `
+    <div class="card review-card">
+      <p class="review-title">Sunday Weekly Log & Review</p>
+      <p class="review-sub">Week of ${mon.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</p>
+      <div class="field"><label>Week</label><input id="rWeek" type="text" value="${existing.week ?? weekNum}"></div>
+      <div class="field"><label>Push Ladder Max / Notes</label><input id="rPushups" type="text" placeholder="e.g. 15 reps Feet-Elevated" value="${existing.pushups ?? ''}"></div>
+      <div class="field"><label>Pull Ladder Progress</label><input id="rDeadhang" type="text" placeholder="e.g. 30s Dead Hang + 5 Negatives" value="${existing.deadhang ?? ''}"></div>
+      <div class="field"><label>Squat Ladder Progress</label><input id="rPlank" type="text" placeholder="e.g. 10 reps Rear Foot Elevated" value="${existing.plank ?? ''}"></div>
+      <div class="field"><label>5k Time / Jog Notes</label><input id="rFiveK" type="text" placeholder="e.g. 26:15 5k" value="${existing.fiveK ?? ''}"></div>
+      <div class="field"><label>Body Weight (optional)</label><input id="rWeight" type="text" value="${existing.bodyweight ?? ''}"></div>
+      <div class="field readout"><span>Days Logged This Week</span><span class="val">${completed}/7</span></div>
+      <div class="field"><label>Weekly Reflection / Notes</label><textarea id="rVibes" placeholder="How did training feel this week?">${existing.vibes ?? ''}</textarea></div>
+      <button class="log-btn" id="saveReviewBtn" style="background:var(--gold); color:#1A1608;">Save Sunday Log</button>
+      <div class="save-note" id="reviewSaveNote"></div>
+    </div>
+  `;
+  document.getElementById('saveReviewBtn').addEventListener('click', ()=>{
+    REVIEWS[wKey] = {
+      week: document.getElementById('rWeek').value,
+      pushups: document.getElementById('rPushups').value,
+      deadhang: document.getElementById('rDeadhang').value,
+      plank: document.getElementById('rPlank').value,
+      fiveK: document.getElementById('rFiveK').value,
+      bodyweight: document.getElementById('rWeight').value,
+      vibes: document.getElementById('rVibes').value,
+      completed: completed
+    };
+    saveReviews(REVIEWS);
+    const n = document.getElementById('reviewSaveNote');
+    n.textContent = 'Sunday log saved ✓';
+    setTimeout(()=>{ n.textContent=''; }, 1800);
+  });
+}
+
+function renderGoals(){
+  const slot = document.getElementById('goalsSlot');
+  slot.innerHTML = '';
+  Object.keys(GOALS).forEach(key => {
+    const ladder = GOALS[key];
+    const state = GOAL_STATE[key];
+    const currentIdx = state.findIndex(v => !v);
+    const currentLabel = currentIdx === -1 ? 'Ladder completed (Year-End Goal Reached! 🎉)' : ('Target Step: ' + ladder.steps[currentIdx].label);
+
+    const card = document.createElement('div');
+    card.className = 'card goal-card';
+    card.innerHTML = `
+      <div class="goal-head">
+        <p class="goal-title">${ladder.title}</p>
+        <span class="goal-time">Goal ref (${ladder.time})</span>
+      </div>
+      <p class="goal-current">${currentLabel}</p>
+    `;
+    ladder.steps.forEach((step, i) => {
+      const done = state[i];
+      const isCurrent = i === currentIdx;
+      const row = document.createElement('div');
+      row.className = 'ladder-step' + (done ? ' done' : '') + (isCurrent ? ' current' : '');
+      row.innerHTML = `
+        <button class="step-check${done ? ' done' : ''}${isCurrent ? ' current' : ''}">${done ? '✓' : ''}</button>
+        <div class="step-body">
+          <div class="step-label">${i+1}. ${step.label}</div>
+          <div class="step-detail">${step.detail}</div>
+        </div>
+      `;
+      row.querySelector('.step-check').addEventListener('click', ()=>{
+        GOAL_STATE[key][i] = !GOAL_STATE[key][i];
+        saveGoals(GOAL_STATE);
+        renderGoals();
+        if(MODE === 'today') render();
+      });
+      card.appendChild(row);
+    });
+    slot.appendChild(card);
+  });
+}
+
+function setupMovementSelectors(key){
+  const selectorsContainer = document.getElementById('movementSelectors');
+  selectorsContainer.style.display = 'flex';
+
+  ['push', 'pull', 'squat'].forEach(mKey => {
+    const select = document.getElementById('select' + mKey.charAt(0).toUpperCase() + mKey.slice(1));
+    select.innerHTML = '';
+    GOALS[mKey].steps.forEach((step, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${idx + 1}. ${step.label}`;
+      select.appendChild(opt);
+    });
+
+    const activeInfo = currentStepFor(mKey, key);
+    select.value = activeInfo.idx;
+
+    select.onchange = (e) => {
+      const newIdx = parseInt(e.target.value, 10);
+      if(!LOG[key]) LOG[key] = { type:'strength', done:false, busy:false };
+      if(!LOG[key].selectedSteps) LOG[key].selectedSteps = {};
+      LOG[key].selectedSteps[mKey] = newIdx;
+      saveLog(LOG);
+      render();
+    };
+  });
+}
+
+function render(){
+  const dow = VIEW.getDay();
+  const sched = SCHEDULE[dow];
+  const key = dateKey(VIEW);
+  const entry = LOG[key];
+  const done = !!(entry && entry.done);
+  const busy = !!(entry && entry.busy);
+  const isToday = sameDay(VIEW, TODAY);
+
+  document.getElementById('dateName').textContent = VIEW.toLocaleDateString(undefined,{ weekday:'long', month:'short', day:'numeric'});
+  document.getElementById('todayPill').textContent = isToday ? 'today' : 'tap to jump to today';
+
+  const card = document.getElementById('dayCard');
+  card.className = 'card ' + sched.type;
+  document.getElementById('dayType').textContent = sched.label;
+  document.getElementById('daySub').textContent = sched.sub;
+
+  const selectorsContainer = document.getElementById('movementSelectors');
+  if(sched.type === 'strength'){
+    setupMovementSelectors(key);
+    document.getElementById('moves').innerHTML = strengthMovesHtml(busy, key);
+  } else {
+    selectorsContainer.style.display = 'none';
+    document.getElementById('moves').innerHTML = '<span>' + (busy ? sched.busyMoves : sched.moves) + '</span>';
+  }
+
+  const busyRow = document.getElementById('busyRow');
+  busyRow.style.display = sched.type === 'rest' ? 'none' : 'flex';
+  document.getElementById('busyCheck').checked = busy;
+  const busyLabel = busyRow.querySelector('label');
+  if(busyLabel) busyLabel.textContent = 'Busy today — quick version';
+
+  const btn = document.getElementById('logBtn');
+  btn.textContent = done ? 'Done ✓ (tap to undo)' : sched.btn;
+  btn.className = 'log-btn' + (done ? ' done' : '');
+
+  document.getElementById('streakNum').textContent = computeStreak(LOG, TODAY);
+
+  if(dow === 0){ renderReviewForm(); }
+  else{ document.getElementById('reviewSlot').innerHTML = ''; }
+
+  const horizon = document.getElementById('horizon');
+  horizon.innerHTML = '';
+  const startOfWeek = new Date(VIEW); startOfWeek.setDate(VIEW.getDate() - VIEW.getDay());
+  for(let i=0;i<7;i++){
+    const d = new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i);
+    const dSched = SCHEDULE[i]; const dKey = dateKey(d); const dEntry = LOG[dKey];
+    const isFuture = d > TODAY && !sameDay(d, TODAY);
+    const isFilled = (dEntry && dEntry.done) || (dSched.type === 'rest' && !isFuture);
+    const isBusy = !!(dEntry && dEntry.busy);
+    const isViewing = sameDay(d, VIEW);
+
+    const chip = document.createElement('button');
+    chip.className = 'daychip';
+    chip.addEventListener('click', ()=>{ VIEW = d; render(); });
+    const sun = document.createElement('div');
+    sun.className = 'sun' + (isFilled ? ' filled ' + dSched.type : '') + (isBusy ? ' busy' : '') + (isViewing ? ' viewing' : '');
+    chip.appendChild(sun);
+    const label = document.createElement('div');
+    label.textContent = DOW_LETTERS[i];
+    chip.appendChild(label);
+    horizon.appendChild(chip);
+  }
+}
+
+function toggleDone(){
+  const dow = VIEW.getDay(); const sched = SCHEDULE[dow]; const key = dateKey(VIEW);
+  const entry = LOG[key];
+  const busy = document.getElementById('busyCheck').checked;
+  const currentSelected = (entry && entry.selectedSteps) ? entry.selectedSteps : undefined;
+  if(entry && entry.done){
+    delete LOG[key];
+  } else {
+    LOG[key] = { type: sched.type, done:true, busy: busy, selectedSteps: currentSelected, ts: Date.now() };
+  }
+  saveLog(LOG); render();
+}
+
+document.getElementById('logBtn').addEventListener('click', toggleDone);
+document.getElementById('busyCheck').addEventListener('change', ()=>{
+  const key = dateKey(VIEW); const entry = LOG[key]; const isChecked = document.getElementById('busyCheck').checked;
+  if(entry){
+    entry.busy = isChecked;
+  } else {
+    LOG[key] = { type: SCHEDULE[VIEW.getDay()].type, done: false, busy: isChecked };
+  }
+  saveLog(LOG);
+  render();
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{ VIEW.setDate(VIEW.getDate()-1); render(); });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ VIEW.setDate(VIEW.getDate()+1); render(); });
+document.getElementById('dateBtn').addEventListener('click', ()=>{ VIEW = new Date(); render(); });
+
+document.getElementById('tabToday').addEventListener('click', ()=>{
+  MODE = 'today';
+  document.getElementById('tabToday').classList.add('active');
+  document.getElementById('tabGoals').classList.remove('active');
+  document.getElementById('todayView').style.display = 'block';
+  document.getElementById('goalsView').style.display = 'none';
+});
+document.getElementById('tabGoals').addEventListener('click', ()=>{
+  MODE = 'goals';
+  document.getElementById('tabGoals').classList.add('active');
+  document.getElementById('tabToday').classList.remove('active');
+  document.getElementById('goalsView').style.display = 'block';
+  document.getElementById('todayView').style.display = 'none';
+  renderGoals();
+});
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

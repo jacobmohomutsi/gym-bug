@@ -1,0 +1,14 @@
+{
+  "name": "GYM-BUG Training Tracker",
+  "short_name": "GYM-BUG",
+  "description": "Daily strength, rest, and run tracker with long-term progression goals.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10152A",
+  "theme_color": "#10152A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
