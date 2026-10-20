@@ -1,4 +1,4 @@
-const CACHE = 'gym-bug-v1';
+const CACHE = 'gym-bug-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (e) => {
